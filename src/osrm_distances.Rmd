@@ -1,0 +1,30 @@
+---
+title: "OSRM distances"
+author: "Ruslan Basyrov"
+date: "11/03/2024"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Libraries
+```{r}
+library(sf)
+library(osrm)
+```
+
+
+```{r}
+shpFile = read_sf("/Users/johnnymosby/repos/thesis_demography/data/STATISTIK_AUSTRIA_GEM_MP_20220101/", options = "ENCODING=WINDOWS-1252")
+
+shpFile <- st_transform(shpFile, 4326)
+coordinates = st_coordinates(shpFile[, "geometry"]) |> 
+    as.data.frame()
+openstreetmapResponse = osrmRoute(loc = coordinates[c(1,9),])
+subsetDistances = shpFile[1:2, "geometry"]
+openstreetmapResponse = osrmRoute(src = coordinates, dst = coordinates)
+
+```
+
