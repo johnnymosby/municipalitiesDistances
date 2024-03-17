@@ -24,7 +24,7 @@ coordinates = st_coordinates(shpFile[, "geometry"]) |>
     as.data.frame()
 openstreetmapResponse = osrmRoute(loc = coordinates[c(1,9),])
 subsetDistances = shpFile[1:2, "geometry"]
-openstreetmapResponse = osrmRoute(src = coordinates, dst = coordinates)
-
+openstreetmapResponse = osrmRoute(src = coordinates[1, ], dst = coordinates[2, ])
+openstreetmapResponse1 = osrmRoute(src = coordinates[1, ], dst = coordinates[2, ], osrm.server = "http://localhost:1234/")
 ```
 
