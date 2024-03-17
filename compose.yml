@@ -1,0 +1,8 @@
+version: '3'
+services:
+  server:
+    image: server
+    build: ./serverOSRM
+    ports:
+      - 1234:5000
+    restart: unless-stopped

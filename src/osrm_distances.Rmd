@@ -22,9 +22,17 @@ shpFile = read_sf("/Users/johnnymosby/repos/thesis_demography/data/STATISTIK_AUS
 shpFile <- st_transform(shpFile, 4326)
 coordinates = st_coordinates(shpFile[, "geometry"]) |> 
     as.data.frame()
-openstreetmapResponse = osrmRoute(loc = coordinates[c(1,9),])
-subsetDistances = shpFile[1:2, "geometry"]
-openstreetmapResponse = osrmRoute(src = coordinates[1, ], dst = coordinates[2, ])
-openstreetmapResponse1 = osrmRoute(src = coordinates[1, ], dst = coordinates[2, ], osrm.server = "http://localhost:1234/")
+rownames(coordinates) = shpFile$g_id
+openstreetmapResponse = osrmTable(src = coordinates, 
+                                  dst = coordinates, 
+                                  measure = c('duration', 'distance'),
+                                  osrm.server = "http://localhost:1234/")
+
+durations = openstreetmapResponse[["durations"]]
+distances = openstreetmapResponse[["distances"]]
+datetime = format(Sys.time(), "%Y%m%d_%H%M")
+
+write.csv(durations, paste("durations_", datetime, ".csv", sep = ""))
+write.csv(distances, paste("distances_", datetime, ".csv", sep = ""))
 ```
 
