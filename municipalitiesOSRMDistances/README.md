@@ -1,2 +1,2 @@
-# thesis_demography
-Thesis in MSc Global Demography
+# Distances between municipalities
+In this part of the thesis, the distances between the Austrian municipalities are calculated by taking the population density adjusted centres as points representing the municipalities (publicly accessible from Statistics Austria). The distances are provided by OpenStreetMap Routing Machine, which is installed locally for (potentially (no comparison with requesting an official routing machine was conducted)) faster requesting of the data.
