@@ -17,12 +17,13 @@ library(osrm)
 
 
 ```{r}
-shpFile = read_sf("/Users/johnnymosby/repos/thesis_demography/data/STATISTIK_AUSTRIA_GEM_MP_20220101/", options = "ENCODING=WINDOWS-1252")
+shpFile = read_sf("/Users/johnnymosby/repos/thesis_demography/municipalitiesOSRMDistances/clientR/data/STATISTIK_AUSTRIA_GEM_MP_20200101/", options = "ENCODING=WINDOWS-1252")
 
 shpFile <- st_transform(shpFile, 4326)
+shpFile = shpFile[which(shpFile$g_name != "Schwanberg"),]
 coordinates = st_coordinates(shpFile[, "geometry"]) |> 
     as.data.frame()
-rownames(coordinates) = shpFile$g_id
+
 openstreetmapResponse = osrmTable(src = coordinates, 
                                   dst = coordinates, 
                                   measure = c('duration', 'distance'),

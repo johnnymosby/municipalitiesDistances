@@ -1,0 +1,66 @@
+---
+title: "analysis"
+author: "Ruslan Basyrov"
+date: "03/04/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries and data
+```{r}
+library(rjags)
+library(renv)
+
+setwd("/Users/johnnymosby/repos/thesis_demography/bayesianAnalysis/script")
+data = read.csv("microdata.csv") |> 
+    subset(select = c("m_age_at_birth", "f_age_at_birth",
+                      "m_annual_salary_tm2", "f_annual_salary_tm2",
+                      "gr_m_family_status",
+                      "edu4_comp")) |> 
+    na.omit()
+```
+
+## Summary
+```{r}
+summary(data)
+```
+
+
+## Model a
+Education -> family status
+```{r}
+data_a = data
+
+# 1 is not married, 2 is married 
+data_a$gr_m_family_status[which(data_a$gr_m_family_status != 1)] = 2
+```
+
+```{r}
+edu4_comp ~ gr_m_family_status
+list_a = list(famStatus = data_a$gr_m_family_status, edu = data_a$edu4_comp, N = len(data_a))
+
+file = "model_a.txt"
+cat("
+model {
+    for (i in 1:N) {
+        famStatus[i] ~ dbern()
+    }
+}
+", file = file)
+
+parInit = function() {
+    list()
+}
+
+jagsfit = jags.model(data = list_a,
+           inits = 
+           file = file)
+```
+
+```{r}
+update(jagsfit)
+```
+

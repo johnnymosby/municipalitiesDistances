@@ -1,1 +1,0 @@
-The microdata is not publicly available

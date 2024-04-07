@@ -1,7 +1,0 @@
-version: '3'
-services:
-  script:
-    image: script
-    build: ./script
-    env_file:
-      - .env

@@ -1,0 +1,5 @@
+microdata.dta
+*.dta
+microdata*
+microdata.csv
+.Rhistory
