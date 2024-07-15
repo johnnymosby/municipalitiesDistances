@@ -6,8 +6,6 @@ services:
       context: serverOSRM
     networks:
       - distances
-    ports:
-      - 1234:1234
     restart: always
 
   client:
@@ -24,14 +22,6 @@ services:
       - distances
     restart: none
 
-# volumes:
-#   produced_distances:
-#     driver_opts:
-#       o: bind
-#       type: none
-#       device: ./clientR/data
-
 networks:
   distances:
-    name: distances
     driver: bridge

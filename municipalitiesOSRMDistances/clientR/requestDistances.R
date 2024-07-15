@@ -14,7 +14,7 @@ coordinates <- st_coordinates(shp_file[, "geometry"]) |>
 openstreetmap_response <- osrmTable(src = coordinates,
                                     dst = coordinates,
                                     measure = c("duration", "distance"),
-                                    osrm.server = "http://localhost:1234/")
+                                    osrm.server = "server:5000/")
 
 durations <- openstreetmap_response[["durations"]]
 distances <- openstreetmap_response[["distances"]]
