@@ -6,8 +6,10 @@ services:
       context: serverOSRM
     networks:
       - distances
+    ports:
+      - 1234:1234
     restart: always
-  
+
   client:
     depends_on:
       - server
@@ -15,20 +17,21 @@ services:
     container_name: client
     build:
       context: clientR
+    platform: linux/arm64
     volumes:
-      - produced_distances:/var/distances
+      - ./clientR:/var/distances
     networks:
       - distances
-    restart: always
+    restart: none
 
-  volumes:
-    produced_distances:
-      driver_opts:
-        o: bind
-        type: none
-        device: clientR/data
+# volumes:
+#   produced_distances:
+#     driver_opts:
+#       o: bind
+#       type: none
+#       device: ./clientR/data
 
-  networks:
-    distances:
-      name: distances
-      driver: bridge
+networks:
+  distances:
+    name: distances
+    driver: bridge

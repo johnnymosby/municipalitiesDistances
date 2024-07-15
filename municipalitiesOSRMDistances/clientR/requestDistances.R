@@ -3,22 +3,22 @@ library(osrm)
 
 year <- 2020
 
-shp_file <- read_sf(sprintf("STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
+shp_file <- read_sf(sprintf("data/STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
                     options = "ENCODING=WINDOWS-1252")
 
 shp_file <- st_transform(shp_file, 4326)
-shp_file <- shpFile[which(shp_file$g_name != "Schwanberg"), ]
+shp_file <- shp_file[which(shp_file$g_name != "Schwanberg"), ]
 coordinates <- st_coordinates(shp_file[, "geometry"]) |>
   as.data.frame()
 
 openstreetmap_response <- osrmTable(src = coordinates,
                                     dst = coordinates,
                                     measure = c("duration", "distance"),
-                                    osrm.server = "http://localhost:5000/")
+                                    osrm.server = "http://localhost:1234/")
 
-durations <- openstreetmapResponse[["durations"]]
-distances <- openstreetmapResponse[["distances"]]
+durations <- openstreetmap_response[["durations"]]
+distances <- openstreetmap_response[["distances"]]
 
-datetime <- format(Sys.time(), "%Y%m%d_%H%M")
-write.csv(durations, sprintf("durations_%s_%s.csv", year, datetime))
-write.csv(distances, sprintf("distances_%s_%s.csv", year, datetime))
+datetime <- format(Sys.time(), "%Y%m%d")
+write.csv(durations, sprintf("data/outputOSRM/durations_%s_%s.csv", year, datetime))
+write.csv(distances, sprintf("data/outputOSRM/distances_%s_%s.csv", year, datetime))

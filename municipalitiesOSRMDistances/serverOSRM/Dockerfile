@@ -18,5 +18,12 @@ RUN chmod +x ./download_files.sh && \
 RUN chmod +x ./prepare_server.sh && \
 	bash ./prepare_server.sh
 
-ENTRYPOINT [ "osrm-routed", "merged_map.osrm" ]
-CMD [ "--algorithm mld", "--max-table-size 8000" ]
+RUN echo "osrm-routed merged_map.osrm --algorithm mld --max-table-size 8000 --port 1234" > ./runserver.sh && \
+	chmod +x ./runserver.sh
+
+ENTRYPOINT ./runserver.sh
+
+# CMD ["tail", "-f", "/dev/null"]
+
+# CMD [ "osrm-routed", "merged_map.osrm", "--algorithm mld", "--max-table-size 8000" ] 
+# , "--algorithm mld", "--max-table-size 8000"
