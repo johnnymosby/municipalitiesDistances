@@ -1,8 +1,34 @@
-version: '3'
 services:
   server:
     image: server
-    build: ./serverOSRM
-    ports:
-      - 1234:5000
-    restart: unless-stopped
+    container_name: server
+    build:
+      context: serverOSRM
+    networks:
+      - distances
+    restart: always
+  
+  client:
+    depends_on:
+      - server
+    image: client
+    container_name: client
+    build:
+      context: clientR
+    volumes:
+      - produced_distances:/var/distances
+    networks:
+      - distances
+    restart: always
+
+  volumes:
+    produced_distances:
+      driver_opts:
+        o: bind
+        type: none
+        device: clientR/data
+
+  networks:
+    distances:
+      name: distances
+      driver: bridge
