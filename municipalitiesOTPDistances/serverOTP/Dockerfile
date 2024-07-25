@@ -1,31 +1,43 @@
-FROM osrm/osrm-backend:v5.25.0
+FROM debian:bullseye AS filtering
 
-WORKDIR /opt
+RUN apt-get update && \
+    apt-get install -y \
+      wget \
+      osmium-tool
 
 COPY ./download_files.sh ./download_files.sh
-COPY ./prepare_server.sh ./prepare_server.sh
+RUN chmod +x ./download_files.sh \
+    && ./download_files.sh
 
-# The OSRM image is based on archived version of Debian
-RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y \
-			wget \
-			osmium-tool \
-    && chmod +x ./download_files.sh \
-    && ./download_files.sh \
-    && chmod +x ./prepare_server.sh \
-    && ./prepare_server.sh
-
+RUN echo 'Reducing map files'
+COPY ./reduce_map_files.sh ./reduce_map_files.sh
+RUN chmod +x ./reduce_map_files.sh  \
+    && ./reduce_map_files.sh 
+ENTRYPOINT [ "tail", "-f", "/dev/null" ]
 
 # Use OpenJDK 11 as the base image
-FROM opentripplanner:latest
+FROM openjdk:21-slim
 
-COPY --from=0 /opt/merged_map.osrm merged_map.osrm 
+RUN apt-get update && apt-get install -y wget
+RUN wget -O otp.jar https://repo1.maven.org/maven2/org/opentripplanner/otp/2.5.0/otp-2.5.0-shaded.jar
 
-RUN $ java -Xmx2G -jar *.jar --build --save --serve /var/opentripplanner/ /graph.obj
+COPY --from=filtering /var/merged_map.osm.pbf /var/opentripplanner/merged_map.osm.pbf
+COPY ./GTFS/ /var/opentripplanner
 
-FROM opentripplanner:latest
+WORKDIR /var/opentripplanner
 
-COPY --from=1 /graph.obj /graph.obj
+RUN java -Xmx16G -jar /otp.jar --build --save  .
 
-CMD [ "java", "-Xmx4G", "-jar", "*.jar", "--load", "/graph.obj" ]
+ENTRYPOINT [ "tail", "-f", "/dev/null" ]
+
+# RUN $ java -Xmx2G -jar *.jar --build --save --serve /var/opentripplanner/ /graph.obj
+
+
+
+# FROM opentripplanner/opentripplanner:latest
+
+# COPY --from=1 /graph.obj /graph.obj
+# RUN wget -O otp.jar https://repo1.maven.org/maven2/org/opentripplanner/otp/2.5.0/otp-2.5.0-shaded.jar
+# RUN java -Xmx2G -jar otp.jar --build --save --serve /var/opentripplanner/ /graph.obj
+
+# ENTRYPOINT [ "java", "-Xmx4G", "-jar", "otp.jar", "--load", "/graph.obj" ]

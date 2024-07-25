@@ -4,11 +4,11 @@ services:
     container_name: server
     build:
       context: serverOTP
+    ports:
+      - 8000:8000
+    restart: always
     # networks:
     #   - distancesOTP
-    volume:
-      - ./GTFS:/var/opentripplanner
-    restart: always
 
 # networks:
 #   distancesOTP:

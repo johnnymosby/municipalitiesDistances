@@ -1,1 +1,0 @@
-../../municipalitiesOSRMDistances/serverOSRM/prepare_server.sh
