@@ -8,20 +8,36 @@
 tag=latest
 
 regions=(
-	"austria"
-	# "czech-republic"
-	# "bayern"				# Bavaria in Germany
-	# "hungary"
-	# "nord-est"				# Northeastern Italy
-	# "liechtenstein"
-	# "slovakia"
-	# "slovenia"
-	# "switzerland"
+  "austria"
+  # "czech-republic"
+  # "bayern"				# Bavaria in Germany
+  # "hungary"
+  # "nord-est"				# Northeastern Italy
+  # "liechtenstein"
+  # "slovakia"
+  # "slovenia"
+  # "switzerland"
 )
 
 map_files=( "${regions[@]/%/-${tag}.osm.pbf}" )
+
+# Osmium filter command
+filter_command="osmium tags-filter -o temp.osm.pbf -f pbf,add_metadata=false"
+filter_tags="w/highway wa/public_transport=platform wa/railway=platform w/park_ride=yes r/type=restriction r/type=route"
+
+# Process each file
+for file in "${map_files[@]}"; do
+    echo "Filtering $file..."
+    $filter_command $file $filter_tags
+    mv temp.osm.pbf "$file"
+done
+
 
 osmium merge "${map_files[*]}" -o merged_map.osm
 osrm-extract merged_map.osm -p car.lua
 osrm-partition merged_map.osrm
 osrm-customize merged_map.osrm
+
+# deleting files used to produce merged_map.osrm
+rm merged_map.osm
+rm -f "${map_files[*]}"

@@ -1,0 +1,15 @@
+services:
+  server:
+    image: server
+    container_name: server
+    build:
+      context: serverOTP
+    # networks:
+    #   - distancesOTP
+    volume:
+      - ./GTFS:/var/opentripplanner
+    restart: always
+
+# networks:
+#   distancesOTP:
+#     driver: bridge
