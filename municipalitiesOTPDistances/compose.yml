@@ -5,11 +5,15 @@ services:
     build:
       context: serverOTP
     ports:
-      - 8000:8000
-    restart: always
+      - 8080:8080
+    restart: no
+    # volumes:
+    #   - ./serverOTP/GTFS:/var/opentripplanner
     # networks:
     #   - distancesOTP
 
 # networks:
 #   distancesOTP:
 #     driver: bridge
+
+# volumes:

@@ -1,0 +1,108 @@
+---
+title: "otp"
+author: "Ruslan Basyrov"
+date: "7/26/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(gtfstools)
+library(tidyverse)
+library(rnaturalearth)
+```
+
+```{r}
+gtfs_path <- file.path("/Users/johnnymosby/repos/thesis_demography/municipalitiesOTPDistances/serverOTP/GTFS")
+```
+
+```{r}
+gtfs_files <- list.files(path = gtfs_path,
+                         pattern = "*.gtfs.zip$",
+                         full.names = TRUE)
+```
+
+```{r eval=FALSE}
+# Reading the GTFS files into a list of R objects
+gtfs_merged <- read_gtfs(gtfs_files) |> 
+    remove_duplicates()
+```
+
+
+```{r}
+# Filter by time of day
+gtfs_filtered = read_gtfs(gtfs_files) |> 
+    remove_duplicates() |> 
+    filter_by_weekday("saturday") |>
+    filter_by_time_of_day(from = "18:00:00",
+                          to = "20:00:00")
+```
+
+
+```{r eval=FALSE}
+{
+    filename = paste(gtfs_path, "Austria_2024_saturday_evening_time.gtfs.zip", sep="/")
+    write_gtfs(gtfs_filtered,
+               filename)
+}
+```
+
+```{r}
+gtfs_filtered$stops <- gtfs_filtered$stops[!duplicated(gtfs_filtered$stops$stop_id), ]
+
+gtfs_filtered$shapes <- gtfs_filtered$shapes[!duplicated(gtfs_filtered$shapes$shape_id), ]
+
+gtfs_filtered$trips <- gtfs_filtered$trips[!duplicated(gtfs_filtered$trips$trip_id), ]
+
+gtfs_filtered$calendar <- gtfs_filtered$calendar[!duplicated(gtfs_filtered$calendar$service_id), ]
+
+gtfs_filtered$calendar_dates <- gtfs_filtered$calendar_dates[!duplicated(gtfs_filtered$calendar_dates$service_id), ]
+
+gtfs_filtered$calendar_dates <- gtfs_filtered$calendar_dates[!duplicated(gtfs_filtered$calendar_dates$date), ]
+
+gtfs_filtered = remove_duplicates(gtfs_filtered)
+```
+
+
+```{r}
+gtfs_voralberg = read_gtfs("/Users/johnnymosby/Dropbox/to delete/code testing/gtfs Austria separate/20240725-0523_gtfs_vmobil_2024.gtfs.zip") |> 
+    remove_duplicates()
+```
+
+```{r eval=FALSE}
+#validator_path = download_validator(gtfs_path)
+validator_path = "/Users/johnnymosby/Dropbox/to delete/code testing/graphs/default/gtfs-validator-v4.0.0.jar"
+validate_gtfs(gtfs = gtfs_merged,
+              output_path = "/Users/johnnymosby/Dropbox/to delete/code testing/graphs/default/",
+              validator_path = validator_path)
+```
+
+```{r}
+gtfs_merged$trips |> 
+  group_by(trip_id) |> 
+  filter(n() > 1) |> 
+  ungroup() |> 
+    view()
+
+gtfs_merged$stops |> 
+  group_by(stop_id) |> 
+  filter(n() > 1) |> 
+  ungroup() |> 
+    view()
+```
+
+```{r}
+{
+    austria <- ne_countries(country = "austria", scale = "medium", returnclass = "sf")
+    ggplot() +
+          geom_sf(data = austria, fill = "lightgreen", color = "black") +
+          geom_point(data = gtfs_merged$stops, aes(x = stop_lon, y = stop_lat), color = "red", size = 0.1) +
+          coord_sf(xlim = c(9.5, 17.5), ylim = c(46.5, 49.5)) +
+          theme_minimal() |> 
+        print()
+}
+```
+
