@@ -15,7 +15,6 @@ services:
     container_name: client
     build:
       context: clientR
-    platform: linux/arm64
     volumes:
       - ./clientR:/var/distances
     networks:

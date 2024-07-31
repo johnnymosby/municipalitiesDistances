@@ -51,26 +51,31 @@ gtfs_filtered = read_gtfs(gtfs_files) |>
 ```
 
 ```{r}
-gtfs_filtered$stops <- gtfs_filtered$stops[!duplicated(gtfs_filtered$stops$stop_id), ]
+library(sf)
+library(stringr)
+library(opentripplanner) 
 
-gtfs_filtered$shapes <- gtfs_filtered$shapes[!duplicated(gtfs_filtered$shapes$shape_id), ]
+year <- 2022
 
-gtfs_filtered$trips <- gtfs_filtered$trips[!duplicated(gtfs_filtered$trips$trip_id), ]
+points <- read_sf(sprintf("/Users/johnnymosby/repos/thesis_demography/municipalitiesOTPDistances/clientR/data/STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
+                    options = "ENCODING=WINDOWS-1252")
 
-gtfs_filtered$calendar <- gtfs_filtered$calendar[!duplicated(gtfs_filtered$calendar$service_id), ]
+points <- st_transform(points, 4326)
+points_in_vorarlberg =  points[str_detect(points_in_vorarlberg$g_id, "^8"),]
 
-gtfs_filtered$calendar_dates <- gtfs_filtered$calendar_dates[!duplicated(gtfs_filtered$calendar_dates$service_id), ]
+coordinates <- st_coordinates(points_in_vorarlberg[, "geometry"]) |>
+  as.data.frame()
 
-gtfs_filtered$calendar_dates <- gtfs_filtered$calendar_dates[!duplicated(gtfs_filtered$calendar_dates$date), ]
+otpcon = otp_connect(hostname = "localhost",
+                     router = "default",
+                     port = 8080,
+                     timezone = "Europe/Vienna")
 
-gtfs_filtered = remove_duplicates(gtfs_filtered)
+route <- otp_plan(otpcon, 
+                  fromPlace = c(9.899610, 47.09437), 
+                  toPlace = c(9.899610, 47.09437))
 ```
 
-
-```{r}
-gtfs_voralberg = read_gtfs("/Users/johnnymosby/Dropbox/to delete/code testing/gtfs Austria separate/20240725-0523_gtfs_vmobil_2024.gtfs.zip") |> 
-    remove_duplicates()
-```
 
 ```{r eval=FALSE}
 #validator_path = download_validator(gtfs_path)
@@ -78,20 +83,6 @@ validator_path = "/Users/johnnymosby/Dropbox/to delete/code testing/graphs/defau
 validate_gtfs(gtfs = gtfs_merged,
               output_path = "/Users/johnnymosby/Dropbox/to delete/code testing/graphs/default/",
               validator_path = validator_path)
-```
-
-```{r}
-gtfs_merged$trips |> 
-  group_by(trip_id) |> 
-  filter(n() > 1) |> 
-  ungroup() |> 
-    view()
-
-gtfs_merged$stops |> 
-  group_by(stop_id) |> 
-  filter(n() > 1) |> 
-  ungroup() |> 
-    view()
 ```
 
 ```{r}

@@ -1,7 +1,7 @@
 library(sf)
 library(osrm)
 
-year <- 2020
+year <- 2022
 
 shp_file <- read_sf(sprintf("data/STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
                     options = "ENCODING=WINDOWS-1252")
@@ -20,5 +20,6 @@ durations <- openstreetmap_response[["durations"]]
 distances <- openstreetmap_response[["distances"]]
 
 datetime <- format(Sys.time(), "%Y%m%d")
-write.csv(durations, sprintf("data/outputOSRM/durations_%s_%s.csv", year, datetime))
-write.csv(distances, sprintf("data/outputOSRM/distances_%s_%s.csv", year, datetime))
+year_of_map <- 2014
+write.csv(durations, sprintf("data/outputOSRM/durations_%s_%s.csv", year_of_map, datetime))
+write.csv(distances, sprintf("data/outputOSRM/distances_%s_%s.csv", year_of_map, datetime))
