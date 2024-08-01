@@ -5,7 +5,7 @@
 # Alas, as of 17.06.2024, daywise precision is available only for the last week,
 # monthwise (the first day) for the current year, and for the earlier years,
 # only the first day of January is available. This concerns only the ready-to-use snapshots.
-tag=190101
+tag=200101
 
 # Austria and the bordering countries. The bordering countries are limited only to the
 # respective ordering regions, if possible, to save time on the data download and calculation.
