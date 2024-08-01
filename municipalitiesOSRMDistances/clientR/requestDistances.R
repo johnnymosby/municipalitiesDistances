@@ -20,6 +20,6 @@ durations <- openstreetmap_response[["durations"]]
 distances <- openstreetmap_response[["distances"]]
 
 datetime <- format(Sys.time(), "%Y%m%d")
-year_of_map <- 2014
+year_of_map <- 2015
 write.csv(durations, sprintf("data/outputOSRM/durations_%s_%s.csv", year_of_map, datetime))
 write.csv(distances, sprintf("data/outputOSRM/distances_%s_%s.csv", year_of_map, datetime))
