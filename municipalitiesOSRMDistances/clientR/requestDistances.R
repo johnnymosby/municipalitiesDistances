@@ -11,6 +11,11 @@ shp_file <- shp_file[which(shp_file$g_name != "Schwanberg"), ]
 coordinates <- st_coordinates(shp_file[, "geometry"]) |>
   as.data.frame()
 
+for (i in 1:10) {
+  print(paste("Seconds elapsed:", i, "of", 10))
+  Sys.sleep(1)  # Wait for 1 second
+}
+
 openstreetmap_response <- osrmTable(src = coordinates,
                                     dst = coordinates,
                                     measure = c("duration", "distance"),
@@ -20,6 +25,6 @@ durations <- openstreetmap_response[["durations"]]
 distances <- openstreetmap_response[["distances"]]
 
 datetime <- format(Sys.time(), "%Y%m%d")
-year_of_map <- 2016
+year_of_map <- 2023
 write.csv(durations, sprintf("data/outputOSRM/durations_%s_%s.csv", year_of_map, datetime))
 write.csv(distances, sprintf("data/outputOSRM/distances_%s_%s.csv", year_of_map, datetime))
