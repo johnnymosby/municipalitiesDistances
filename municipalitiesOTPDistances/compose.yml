@@ -6,7 +6,7 @@ services:
       context: serverOTP
     ports:
       - 8080:8080
-    restart: no
+    restart: "no"
     # volumes:
     #   - ./serverOTP/GTFS:/var/opentripplanner
     # networks:

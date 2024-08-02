@@ -32,6 +32,5 @@ for file in "${map_files[@]}"; do
     mv temp.osm.pbf "$file"
 done
 
-
 osmium merge "${map_files[*]}" -o /var/merged_map.osm.pbf
 rm -f "${map_files[*]}"
