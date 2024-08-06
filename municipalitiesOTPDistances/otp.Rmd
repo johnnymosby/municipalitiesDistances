@@ -54,46 +54,158 @@ gtfs_filtered = read_gtfs(gtfs_files) |>
 library(sf)
 library(stringr)
 library(opentripplanner) 
+library(httr)
+
+library(jsonlite)
 
 year <- 2022
 
-points <- read_sf(sprintf("/Users/johnnymosby/repos/thesis_demography/municipalitiesOTPDistances/clientR/data/STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
+points <- read_sf(sprintf("/Users/johnnymosby/repos/thesis_demography/municipalitiesOSRMDistances/clientR/data/STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
                     options = "ENCODING=WINDOWS-1252")
 
 points <- st_transform(points, 4326)
-points_in_vorarlberg =  points[str_detect(points_in_vorarlberg$g_id, "^8"),]
+points_in_vorarlberg =  points[str_detect(points$g_id, "^8"),]
 
-coordinates <- st_coordinates(points_in_vorarlberg[, "geometry"]) |>
+coordinates <- st_coordinates(points[, "geometry"]) |>
   as.data.frame()
 
-otpcon = otp_connect(hostname = "localhost",
-                     router = "default",
-                     port = 8080,
-                     timezone = "Europe/Vienna")
+durations = matrix(NA,
+                   nrow = nrow(coordinates),
+                   ncol = nrow(coordinates))
+rownames(durations) = points$g_id
+colnames(durations) = points$g_id
 
-route <- otp_plan(otpcon, 
-                  fromPlace = c(9.899610, 47.09437), 
-                  toPlace = c(9.899610, 47.09437))
+distances = matrix(NA,
+                   nrow = nrow(coordinates),
+                   ncol = nrow(coordinates))
+rownames(distances) = points$g_id
+colnames(distances) = points$g_id
 ```
 
 
-```{r eval=FALSE}
-#validator_path = download_validator(gtfs_path)
-validator_path = "/Users/johnnymosby/Dropbox/to delete/code testing/graphs/default/gtfs-validator-v4.0.0.jar"
-validate_gtfs(gtfs = gtfs_merged,
-              output_path = "/Users/johnnymosby/Dropbox/to delete/code testing/graphs/default/",
-              validator_path = validator_path)
+```{r}
+createQuery = function (from_latitude, from_longitude, to_latitude, to_longitude) {
+    query <- sprintf('
+query TransmodelExampleQuery {
+  trip(
+    from: {
+      coordinates: {
+        latitude: %.5f
+        longitude: %.5f
+      }
+    }
+    to: {
+      coordinates: {
+        latitude: %.5f
+        longitude: %.5f
+      }
+    }
+    dateTime: "2024-02-17T19:00:00+01:00"
+  ) {
+    tripPatterns {
+      duration
+      distance
+      streetDistance
+      expectedStartTime
+      expectedEndTime
+    }
+  }
+}
+',
+    from_latitude,
+    from_longitude,
+    to_latitude,
+    to_longitude)
+
+    return(query) 
+}
+
+```
+
+
+```{r}
+
+base_url <- "http://localhost:8080/otp/transmodel/v3"
+response <- POST(base_url, 
+                 body = list(query = query), 
+                 encode = "json",
+                 httr::add_headers(OTPTimeout = "180000"))
+
+
+json = jsonlite::fromJSON(content(response, "text"))
+
+if (length(json$data$trip$tripPatterns) == 0) {
+    duration = NA
+    distance = NA
+} else {
+    min_duration = which.min(json$data$trip$tripPatterns$duration)
+    duration = json$data$trip$tripPatterns$duration[min_duration]
+    distance = json$data$trip$tripPatterns$distance[min_duration]
+}
 ```
 
 ```{r}
-{
-    austria <- ne_countries(country = "austria", scale = "medium", returnclass = "sf")
-    ggplot() +
-          geom_sf(data = austria, fill = "lightgreen", color = "black") +
-          geom_point(data = gtfs_merged$stops, aes(x = stop_lon, y = stop_lat), color = "red", size = 0.1) +
-          coord_sf(xlim = c(9.5, 17.5), ylim = c(46.5, 49.5)) +
-          theme_minimal() |> 
-        print()
+base_url <- "http://localhost:8080/otp/transmodel/v3"
+n_expected_requests = sum(!is.na(distance_matrix))
+n_current_requests = 0
+
+for (i in 1:nrow(coordinates)) {
+    for (j in 1:nrow(coordinates)) {
+        if (is.na(distance_matrix[i, j])) {
+            next
+        }
+        query = createQuery(coordinates[i, "Y"],
+                            coordinates[i, "X"],
+                            coordinates[j, "Y"],
+                            coordinates[j, "X"])
+        
+        
+        response <- httr::POST(base_url, 
+                 body = list(query = query), 
+                 encode = "json",
+                 httr::add_headers(OTPTimeout = "180000"))
+        
+        json = jsonlite::fromJSON(content(response, "text", encoding="UTF-8"))
+        
+        if (length(json$data$trip$tripPatterns) == 0) {
+            duration = NA
+            distance = NA
+        } else {
+            min_duration = which.min(json$data$trip$tripPatterns$duration)
+            duration = json$data$trip$tripPatterns$duration[min_duration]
+            distance = json$data$trip$tripPatterns$distance[min_duration]
+        }
+        
+        durations[i, j] = duration
+        distances[i, j] = distance
+        n_current_requests = n_current_requests + 1
+        message(sprintf("i: %s j: %s progress: %.5f%%", 
+                        i, 
+                        j,
+                        100 * n_current_requests / n_expected_requests),
+                "\r",
+                appendLF=FALSE)
+        flush.console()
+    }
 }
+```
+
+```{r}
+library(sf)
+library(tidyverse)
+
+distances <- t(apply(st_coordinates(points$geometry), 1, function(x) {
+  st_distance(st_point(x), points)
+}))
+
+result_table <- as.data.frame(distances)
+colnames(result_table) <- paste0("Point_", 1:ncol(result_table))
+rownames(result_table) <- paste0("Point_", 1:nrow(result_table))
+
+library(units)
+distance_matrix = st_distance(points$geometry, points$geometry) |>
+    drop_units()
+
+distance_matrix[distance_matrix > 40000] = NA
 ```
 

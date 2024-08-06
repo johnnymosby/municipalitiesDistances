@@ -1,7 +1,7 @@
 services:
   server:
-    image: server
-    container_name: server
+    image: serverotp
+    container_name: serverotp
     build:
       context: serverOTP
     ports:
