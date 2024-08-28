@@ -1,0 +1,97 @@
+---
+title: "r5"
+author: "Ruslan Basyrov"
+date: "8/22/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+options(java.parameters = "-Xmx16G")
+```
+
+```{r}
+library(r5r)
+library(sf)
+library(data.table)
+library(ggplot2)
+```
+
+```{r}
+year = 2022
+
+# change the pathname
+points <- read_sf(sprintf("/Users/johnnymosby/repos/thesis_demography/municipalitiesOSRMDistances/clientR/data/STATISTIK_AUSTRIA_GEM_MP_%s0101/", year),
+                    options = "ENCODING=WINDOWS-1252")
+
+points <- st_transform(points, 4326)
+
+coordinates <- st_coordinates(points[, "geometry"]) |>
+  as.data.frame()
+coordinates$id = points$g_id
+
+coordinates = coordinates[, c("id", "Y", "X")]
+colnames(coordinates) = c("id", "lat", "lon")
+```
+
+```{r}
+# change the pathname
+data_path <- "/Users/johnnymosby/repos/thesis_demography/municipalitiesR5Distances/files/"
+```
+
+### Setting up the routing machine of R5
+```{r}
+r5r_core <- setup_r5(data_path = data_path)
+```
+
+### A bit about time window
+The time window is 3 hours between 17:00 and 20:00. The distances are calculated for each minute within the time window. Then the smallest value is taken as representing the time distances between the points. The assumption is that people are rational and do not wait for the public transport unnecessarily.
+```{r}
+mode <- c("WALK", "TRANSIT")
+max_walk_time <- 120 # minutes
+max_trip_duration <- 120 # minutes
+departure_datetime <- as.POSIXct("24-08-2024 17:00:00",
+                                 format = "%d-%m-%Y %H:%M:%S")
+
+ttm <- expanded_travel_time_matrix(r5r_core = r5r_core,
+                          origins = coordinates,
+                          destinations = coordinates,
+                          mode = mode,
+                          departure_datetime = departure_datetime,
+                          max_trip_duration = max_trip_duration,
+                          max_walk_time = max_walk_time,
+                          time_window = 180,
+                          progress = TRUE)
+
+ttm <- ttm[
+    , .SD[which.min(get('total_time'))],
+                    by = .(from_id, to_id)
+    ][
+        , .(from_id, to_id, total_time)
+    ]
+
+head(ttm)
+```
+
+```{r}
+result <- dcast(ttm, from_id ~ to_id, value.var = "total_time")
+
+rownames(result) = result$from_id
+result[, from_id := NULL]
+```
+
+### Ugly runarounds between the differences of data.table and data.frame tables.
+```{r}
+result[row(result) == col(result)] <- 0
+
+result[1, 1] = 10101
+setnames(result, "from_id", "")
+
+datetime = format(Sys.time(), "%Y%m%d_%H%M")
+
+write.csv(result, paste("output/durations_", datetime, ".csv", sep = ""), sep = ",")
+```
+
