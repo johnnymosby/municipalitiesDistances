@@ -162,8 +162,7 @@ for (i in 1:nrow(coordinates)) {
         
         response <- httr::POST(base_url, 
                  body = list(query = query), 
-                 encode = "json",
-                 httr::add_headers(OTPTimeout = "180000"))
+                 encode = "json")
         
         json = jsonlite::fromJSON(content(response, "text", encoding="UTF-8"))
         
@@ -207,5 +206,33 @@ distance_matrix = st_distance(points$geometry, points$geometry) |>
     drop_units()
 
 distance_matrix[distance_matrix > 40000] = NA
+```
+
+```{r}
+file_list <- list.files("/Users/johnnymosby/repos/thesis_demography/municipalitiesOSRMDistances/clientR/data/outputOSRM", full.names = TRUE)
+
+for (file in file_list) {
+    if (file == "/Users/johnnymosby/repos/thesis_demography/municipalitiesOSRMDistances/clientR/data/outputOSRM/distances_2020_20240405.csv" ||
+        file == "/Users/johnnymosby/repos/thesis_demography/municipalitiesOSRMDistances/clientR/data/outputOSRM/durations_2020_20240405.csv") {
+        next
+    }
+    print(file)
+    table = read.csv(file)
+    table = table[, -1]
+    colnames(table) = points$g_id
+    rownames(table) = points$g_id
+    write.csv(table, file = file)
+}
+```
+
+
+```{r}
+otpcon <- otp_connect(check = FALSE)
+```
+
+```{r}
+otp_plan(otpcon = otpcon,
+         fromPlace = coordinates,
+         toPlace = coordinates)
 ```
 
